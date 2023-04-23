@@ -109,7 +109,7 @@ var dataObjects = [
 ];
 
 void main() {
-  MyApp app = MyApp();
+  newApp app = newApp();
   runApp(app);
 }
 
@@ -123,9 +123,33 @@ class MyApp extends StatelessWidget {
           appBar: AppBar(
             title: const Text("Ranking dos times com mais Champions"),
           ),
-          body: SingleChildScrollView(
-            child: DataBodyWidget(objects: dataObjects),
+          body: Center(
+              child: SingleChildScrollView(
+                  scrollDirection: Axis.vertical,
+                  child: DataBodyWidget(
+                      objects: dataObjects,
+                      columnNames: ["Nome", "Fundação", "Champions"],
+                      propertyNames: ["name", "fundation", "champions"]))),
+          bottomNavigationBar: NewNavBar(),
+        ));
+  }
+}
+
+class newApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+        theme: ThemeData(primarySwatch: Colors.red),
+        debugShowCheckedModeBanner: false,
+        home: Scaffold(
+          appBar: AppBar(
+            title: const Text("Ranking dos times com mais Champions"),
           ),
+          body: Center(
+              child: MyTileWidget(
+                  objects: dataObjects,
+                  columnNames: ["Nome", "Fundação", "Champions"],
+                  propertyNames: ["name", "fundation", "champions"])),
           bottomNavigationBar: NewNavBar(),
         ));
   }
@@ -141,7 +165,7 @@ class NewNavBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return BottomNavigationBar(onTap: botaoFoiTocado, items: const [
       BottomNavigationBarItem(
-        label: "Time",
+        label: "Times",
         icon: Icon(Icons.flag_outlined),
       ),
       BottomNavigationBarItem(
@@ -153,73 +177,58 @@ class NewNavBar extends StatelessWidget {
 }
 
 class DataBodyWidget extends StatelessWidget {
-  final List objects;
-  final List<String>? columnNames;
-  final List<String>? propertyNames;
-
-  const DataBodyWidget({
-    Key? key,
-    required this.objects,
-    this.columnNames,
-    this.propertyNames,
-  }) : super(key: key);
-
+  final List<Map<String, dynamic>> objects;
+  final List<String> columnNames;
+  final List<String> propertyNames;
+  DataBodyWidget(
+      {this.objects = const [],
+      this.columnNames = const [],
+      this.propertyNames = const []});
   @override
   Widget build(BuildContext context) {
-    final List<String> _columnNames =
-        columnNames ?? ["Nome", "Fundação", "Champions"];
-    final List<String> _propertyNames =
-        propertyNames ?? ["name", "fundation", "champions"];
-
     return DataTable(
-      columns: _columnNames
-          .map(
-            (name) => DataColumn(
-              label: Expanded(
-                child: Text(
-                  name,
-                  style: const TextStyle(fontStyle: FontStyle.italic),
-                ),
-              ),
-            ),
-          )
-          .toList(),
-      rows: objects
-          .map(
-            (obj) => DataRow(
-              cells: _propertyNames
-                  .map(
-                    (propName) => obj.containsKey(propName)
-                        ? DataCell(Text(obj[propName].toString()))
-                        : const DataCell(Text('')),
-                  )
-                  .toList(),
-            ),
-          )
-          .toList(),
-    );
+        columns: columnNames
+            .map((name) => DataColumn(
+                label: Expanded(
+                    child: Text(name,
+                        style: TextStyle(fontStyle: FontStyle.italic)))))
+            .toList(),
+        rows: objects
+            .map((obj) => DataRow(
+                cells: propertyNames
+                    .map((propName) => DataCell(Text(obj[propName])))
+                    .toList()))
+            .toList());
   }
 }
 
 class MyTileWidget extends StatelessWidget {
-  List objects;
-  List<String> propertyNames;
-  MyTileWidget({this.objects = const [], this.propertyNames = const []});
+  List<Map<String, dynamic>> objects;
+  final List<String> columnNames;
+  final List<String> propertyNames;
+
+  MyTileWidget(
+      {this.objects = const [],
+      this.columnNames = const [],
+      this.propertyNames = const []});
+
   @override
   Widget build(BuildContext context) {
     return ListView.builder(
       itemCount: objects.length,
       itemBuilder: (context, index) {
-        var obj = objects[index];
+        final obj = objects[index];
+
+        final columnTexts = columnNames.map((col) {
+          final prop = propertyNames[columnNames.indexOf(col)];
+          return Text("$col: ${obj[prop]}");
+        }).toList();
+
         return ListTile(
-          title: Text(obj[propertyNames[0]]),
-          subtitle: Text(
-            propertyNames
-                .skip(1)
-                .map((propName) => "${propName}: ${obj[propName]}")
-                .join(" - "),
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: columnTexts,
           ),
-          trailing: Icon(Icons.chevron_right),
         );
       },
     );
